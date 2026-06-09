@@ -1,0 +1,372 @@
+/* ScheduleLayer.css
+   Import this in your App.jsx or alongside ScheduleLayer.jsx
+   Designed to sit inside your existing Khroknows layout container.
+   Uses CSS custom properties so it inherits your existing theme tokens
+   where you have them — falls back gracefully if not.
+*/
+
+/* ── layout ─────────────────────────────────────────────────────────────── */
+.schedule-layer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0 0 2rem;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* ── day summary ────────────────────────────────────────────────────────── */
+.day-summary {
+  background: var(--surface, #fff);
+  border: 0.5px solid var(--border, rgba(0,0,0,0.1));
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-row {
+  display: flex;
+  gap: 8px;
+}
+
+.summary-cell {
+  flex: 1;
+  background: var(--tbg);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.summary-tier-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tc);
+  opacity: 0.8;
+}
+
+.summary-tier-score {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--tc);
+}
+
+.summary-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summary-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border, rgba(0,0,0,0.08));
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.summary-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #534AB7 0%, #1D9E75 100%);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.summary-pct {
+  font-size: 12px;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* ── steps meter ────────────────────────────────────────────────────────── */
+.steps-meter {
+  background: var(--surface, #fff);
+  border: 0.5px solid var(--border, rgba(0,0,0,0.1));
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.steps-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.steps-icon { font-size: 18px; }
+
+.steps-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text, #111);
+  flex: 1;
+}
+
+.steps-goal {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+}
+
+.steps-count {
+  font-size: 15px;
+  font-weight: 600;
+  color: #D85A30;
+  background: #FAECE7;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.steps-edit-hint {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.steps-input {
+  width: 90px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #D85A30;
+  background: #FAECE7;
+  border: 1px solid #D85A30;
+  border-radius: 20px;
+  padding: 3px 10px;
+  text-align: right;
+}
+
+.steps-track {
+  position: relative;
+  height: 8px;
+  background: var(--border, rgba(0,0,0,0.08));
+  border-radius: 4px;
+  overflow: visible;
+}
+
+.steps-fill {
+  height: 100%;
+  background: #D85A30;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.steps-fill.complete {
+  background: #1D9E75;
+}
+
+.step-tick {
+  position: absolute;
+  top: -3px;
+  width: 1px;
+  height: 14px;
+  background: var(--border, rgba(0,0,0,0.2));
+  transform: translateX(-50%);
+}
+
+.steps-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.step-pill {
+  font-size: 11px;
+  background: #FAECE7;
+  color: #712B13;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.step-pill.bonus {
+  background: #F1EFE8;
+  color: #444441;
+}
+
+/* ── phase sections ─────────────────────────────────────────────────────── */
+.phase-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.phase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.phase-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #aaa);
+}
+
+.phase-score {
+  font-size: 11px;
+  color: var(--text-muted, #aaa);
+}
+
+/* ── block cards ────────────────────────────────────────────────────────── */
+.block-card {
+  background: var(--surface, #fff);
+  border: 0.5px solid var(--border, rgba(0,0,0,0.1));
+  border-left: 3px solid var(--tier-color);
+  border-radius: 0 12px 12px 0;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.block-card.all-done {
+  opacity: 0.7;
+}
+
+.block-header {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.block-icon {
+  font-size: 18px;
+  text-align: center;
+}
+
+.block-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.block-time {
+  font-size: 11px;
+  color: var(--text-muted, #999);
+  font-variant-numeric: tabular-nums;
+}
+
+.block-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text, #111);
+}
+
+.block-sub {
+  font-size: 12px;
+  color: var(--text-muted, #888);
+}
+
+.block-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.block-progress {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted, #aaa);
+  min-width: 28px;
+  text-align: right;
+}
+
+.block-chevron {
+  font-size: 10px;
+  color: var(--text-muted, #ccc);
+}
+
+/* ── habit checks ───────────────────────────────────────────────────────── */
+.block-habits {
+  border-top: 0.5px solid var(--border, rgba(0,0,0,0.06));
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.habit-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0.5px solid var(--border, rgba(0,0,0,0.08));
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.habit-check:hover {
+  background: var(--tier-bg);
+  border-color: var(--tier-color);
+}
+
+.habit-check.checked {
+  background: var(--tier-bg);
+  border-color: var(--tier-color);
+  opacity: 0.75;
+}
+
+.habit-tick {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tier-color);
+  min-width: 16px;
+  text-align: center;
+}
+
+.habit-label {
+  font-size: 13px;
+  color: var(--text, #111);
+  flex: 1;
+  line-height: 1.4;
+}
+
+.habit-check.checked .habit-label {
+  text-decoration: line-through;
+  color: var(--text-muted, #888);
+}
+
+.habit-tier-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── dark mode ──────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  .schedule-layer {
+    --surface: #1a1a1a;
+    --border: rgba(255,255,255,0.1);
+    --text: #f0f0f0;
+    --text-muted: #777;
+  }
+  .step-pill { background: #3a2218; color: #F5C4B3; }
+  .step-pill.bonus { background: #2c2c2a; color: #D3D1C7; }
+  .steps-count { background: #3a2218; }
+  .steps-input { background: #3a2218; }
+  .summary-fill { opacity: 0.9; }
+}
