@@ -1,20 +1,15 @@
-// useScheduleState.js
-// Drop into src/hooks/ (or wherever your Khroknows hooks live).
-// Persists today's schedule completions and step count to localStorage,
-// keyed by date so it auto-resets each morning.
-//
-// Usage:
-//   const { completedHabits, toggleHabit, stepCount, updateSteps } = useScheduleState();
-
 import { useState, useEffect, useCallback } from "react";
 import { ALL_SCHEDULE_HABITS } from "../data/scheduleHabits";
+import { supabase } from "../lib/supabase";
 
 const STORAGE_KEY_PREFIX = "khroknows_schedule_";
 const STEPS_KEY_PREFIX   = "khroknows_steps_";
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10); // "2026-06-08"
+  return new Date().toISOString().slice(0, 10);
 }
+
+// ─── localStorage helpers (cache / offline fallback) ─────────────────────────
 
 function loadTodayCompletions() {
   try {
@@ -28,7 +23,7 @@ function loadTodayCompletions() {
 function saveTodayCompletions(set) {
   try {
     localStorage.setItem(STORAGE_KEY_PREFIX + todayKey(), JSON.stringify([...set]));
-  } catch { /* storage full — fail silently */ }
+  } catch {}
 }
 
 function loadTodaySteps() {
@@ -46,7 +41,6 @@ function saveTodaySteps(n) {
   } catch {}
 }
 
-// Prune entries older than 30 days to avoid localStorage bloat
 function pruneOldEntries() {
   try {
     const cutoff = new Date();
@@ -63,12 +57,60 @@ function pruneOldEntries() {
   } catch {}
 }
 
+// ─── Supabase sync ───────────────────────────────────────────────────────────
+// Table: schedule_days  (date text PK, completed_habits jsonb, step_count int)
+
+async function fetchFromSupabase(date) {
+  try {
+    const { data, error } = await supabase
+      .from("schedule_days")
+      .select("completed_habits, step_count")
+      .eq("date", date)
+      .maybeSingle();
+    if (error || !data) return null;
+    return {
+      completedHabits: new Set(data.completed_habits ?? []),
+      stepCount: data.step_count ?? 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function upsertToSupabase(date, completedHabits, stepCount) {
+  try {
+    await supabase.from("schedule_days").upsert(
+      { date, completed_habits: [...completedHabits], step_count: stepCount },
+      { onConflict: "date" }
+    );
+  } catch {}
+}
+
+// ─── Hook ────────────────────────────────────────────────────────────────────
+
 export function useScheduleState() {
   const [completedHabits, setCompletedHabits] = useState(() => loadTodayCompletions());
   const [stepCount, setStepCount] = useState(() => loadTodaySteps());
 
-  // Prune old entries once on mount
-  useEffect(() => { pruneOldEntries(); }, []);
+  // On mount: prune old entries, then hydrate from Supabase if available
+  useEffect(() => {
+    pruneOldEntries();
+    const date = todayKey();
+    fetchFromSupabase(date).then(remote => {
+      if (!remote) return;
+      // Merge: union of local + remote (keeps optimistic local state)
+      setCompletedHabits(local => {
+        const merged = new Set([...local, ...remote.completedHabits]);
+        saveTodayCompletions(merged);
+        return merged;
+      });
+      setStepCount(local => {
+        const merged = Math.max(local, remote.stepCount);
+        saveTodaySteps(merged);
+        return merged;
+      });
+    });
+  }, []);
 
   const toggleHabit = useCallback((id) => {
     setCompletedHabits(prev => {
@@ -76,6 +118,9 @@ export function useScheduleState() {
       if (next.has(id)) next.delete(id);
       else next.add(id);
       saveTodayCompletions(next);
+      // fire-and-forget sync — stepCount needed, read from localStorage
+      const steps = loadTodaySteps();
+      upsertToSupabase(todayKey(), next, steps);
       return next;
     });
   }, []);
@@ -84,9 +129,12 @@ export function useScheduleState() {
     const clamped = Math.max(0, Math.round(n));
     setStepCount(clamped);
     saveTodaySteps(clamped);
+    setCompletedHabits(prev => {
+      upsertToSupabase(todayKey(), prev, clamped);
+      return prev;
+    });
   }, []);
 
-  // Stats helpers — useful for your existing 7-day view
   const todayStats = {
     date: todayKey(),
     completed: completedHabits.size,
@@ -99,7 +147,8 @@ export function useScheduleState() {
   return { completedHabits, toggleHabit, stepCount, updateSteps, todayStats };
 }
 
-// Helper to get historical schedule stats for your 7-day streak view
+// ─── History helper ──────────────────────────────────────────────────────────
+
 export function getScheduleHistoryStats(days = 7) {
   const results = [];
   for (let i = 0; i < days; i++) {
@@ -115,5 +164,5 @@ export function getScheduleHistoryStats(days = 7) {
       results.push({ date: key, completed: 0, total: ALL_SCHEDULE_HABITS.length, steps: 0 });
     }
   }
-  return results.reverse(); // oldest first
+  return results.reverse();
 }
