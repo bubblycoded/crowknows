@@ -108,6 +108,7 @@ To deploy, connect the repo to [Vercel](https://vercel.com), add the same two
 variables, and push to `main`. To install it as an app: on iPhone, open the
 site in Safari and choose Share → Add to Home Screen; on Android, use
 Chrome's Install option.
+The app icon is the crow from the logo (`public/icons/`).
 
 <br />
 
