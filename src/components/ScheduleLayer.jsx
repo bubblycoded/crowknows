@@ -21,10 +21,6 @@ function pct(n, total) {
   return Math.min(100, Math.round((n / total) * 100));
 }
 
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 // ─── sub-components ──────────────────────────────────────────────────────────
 
 function StepsMeter({ stepCount, onStepUpdate }) {

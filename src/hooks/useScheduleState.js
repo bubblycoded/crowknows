@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { ALL_SCHEDULE_HABITS } from "../data/scheduleHabits";
 import { supabase } from "../lib/supabase";
+import { dateKey } from "../lib/dateKey";
 
 const STORAGE_KEY_PREFIX = "khroknows_schedule_";
 const STEPS_KEY_PREFIX   = "khroknows_steps_";
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return dateKey();
 }
 
 // ─── localStorage helpers (cache / offline fallback) ─────────────────────────
@@ -45,7 +46,7 @@ function pruneOldEntries() {
   try {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
-    const cutoffKey = cutoff.toISOString().slice(0, 10);
+    const cutoffKey = dateKey(cutoff);
     for (const key of Object.keys(localStorage)) {
       if (
         (key.startsWith(STORAGE_KEY_PREFIX) || key.startsWith(STEPS_KEY_PREFIX)) &&
@@ -154,7 +155,7 @@ export function getScheduleHistoryStats(days = 7) {
   for (let i = 0; i < days; i++) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
+    const key = dateKey(d);
     try {
       const raw = localStorage.getItem(STORAGE_KEY_PREFIX + key);
       const completed = raw ? JSON.parse(raw).length : 0;
