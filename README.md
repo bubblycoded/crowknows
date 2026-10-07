@@ -17,8 +17,8 @@ that only you can read.
 
 ## The third eye
 
-The crow has three eyes. One looks back at what you did. One is on what
-you're doing right now. One watches what's next. Most systems for getting
+Picture the crow with three eyes. One looks back at what you did. One is on
+what you're doing right now. One watches what's next. Most systems for getting
 organized only manage one of those. This one is shaped around all three:
 the close-of-day ritual looks back, the block you're in is the present, and
 tomorrow's single priority is the eye that looks ahead.
