@@ -59,7 +59,8 @@ function pruneOldEntries() {
 }
 
 // ─── Supabase sync ───────────────────────────────────────────────────────────
-// Table: schedule_days  (date text PK, completed_habits jsonb, step_count int)
+// Table: schedule_days  (PK user_id + date; RLS limits rows to the signed-in user).
+// Setup SQL lives in supabase-setup.sql at the repo root.
 
 async function fetchFromSupabase(date) {
   try {
@@ -78,18 +79,41 @@ async function fetchFromSupabase(date) {
   }
 }
 
-async function upsertToSupabase(date, completedHabits, stepCount) {
+async function upsertToSupabase(userId, date, completedHabits, stepCount) {
+  if (!userId) return;
   try {
-    await supabase.from("schedule_days").upsert(
-      { date, completed_habits: [...completedHabits], step_count: stepCount },
-      { onConflict: "date" }
+    const { error } = await supabase.from("schedule_days").upsert(
+      {
+        user_id: userId,
+        date,
+        completed_habits: [...completedHabits],
+        step_count: stepCount,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,date" }
     );
-  } catch {}
+    if (error) console.error("Crowknows sync failed:", error.message);
+  } catch (err) {
+    console.error("Crowknows sync failed:", err);
+  }
+}
+
+// Call on sign-out so the next person on this browser doesn't see cached days.
+export function clearLocalCache() {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith(STORAGE_KEY_PREFIX) || key.startsWith(STEPS_KEY_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // storage unavailable; nothing to clear
+  }
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-export function useScheduleState() {
+export function useScheduleState(userId) {
   const [completedHabits, setCompletedHabits] = useState(() => loadTodayCompletions());
   const [stepCount, setStepCount] = useState(() => loadTodaySteps());
 
@@ -121,20 +145,20 @@ export function useScheduleState() {
       saveTodayCompletions(next);
       // fire-and-forget sync — stepCount needed, read from localStorage
       const steps = loadTodaySteps();
-      upsertToSupabase(todayKey(), next, steps);
+      upsertToSupabase(userId, todayKey(), next, steps);
       return next;
     });
-  }, []);
+  }, [userId]);
 
   const updateSteps = useCallback((n) => {
     const clamped = Math.max(0, Math.round(n));
     setStepCount(clamped);
     saveTodaySteps(clamped);
     setCompletedHabits(prev => {
-      upsertToSupabase(todayKey(), prev, clamped);
+      upsertToSupabase(userId, todayKey(), prev, clamped);
       return prev;
     });
-  }, []);
+  }, [userId]);
 
   const todayStats = {
     date: todayKey(),

@@ -249,3 +249,17 @@
 .gate-btn:hover {
   background: #6b61d4;
 }
+
+.signout-btn {
+  display: block;
+  margin: 24px auto 32px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: inherit;
+  opacity: 0.6;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.signout-btn:hover { opacity: 1; }

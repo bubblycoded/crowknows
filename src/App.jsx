@@ -1,25 +1,41 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import ScheduleLayer from './components/ScheduleLayer'
 import './components/ScheduleLayer.css'
-import { useScheduleState } from './hooks/useScheduleState'
+import { useScheduleState, clearLocalCache } from './hooks/useScheduleState'
+import { supabase, supabaseConfigured } from './lib/supabase'
 
-const AUTH_KEY = 'crowknows_authed'
-const PASSWORD = 'Jun3bug'
+function SetupNotice() {
+  return (
+    <div className="password-gate">
+      <h1 className="gate-title">Crowknows</h1>
+      <p className="gate-error">
+        Supabase isn&rsquo;t configured. Set VITE_SUPABASE_URL and
+        VITE_SUPABASE_PUBLISHABLE_KEY (see .env.local.example).
+      </p>
+    </div>
+  )
+}
 
-function PasswordGate({ onAuth }) {
-  const [value, setValue] = useState('')
-  const [error, setError] = useState(false)
+function LoginGate() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
-    if (value === PASSWORD) {
-      localStorage.setItem(AUTH_KEY, '1')
-      onAuth()
-    } else {
-      setError(true)
-      setValue('')
+    setBusy(true)
+    setError('')
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    })
+    if (authError) {
+      setError('Incorrect email or password')
+      setPassword('')
     }
+    setBusy(false)
   }
 
   return (
@@ -27,22 +43,39 @@ function PasswordGate({ onAuth }) {
       <h1 className="gate-title">Crowknows</h1>
       <form onSubmit={submit} className="gate-form">
         <input
+          type="email"
+          className={`gate-input${error ? ' gate-input--error' : ''}`}
+          placeholder="Email"
+          autoComplete="username"
+          value={email}
+          autoFocus
+          onChange={e => { setEmail(e.target.value); setError('') }}
+        />
+        <input
           type="password"
           className={`gate-input${error ? ' gate-input--error' : ''}`}
           placeholder="Password"
-          value={value}
-          autoFocus
-          onChange={e => { setValue(e.target.value); setError(false) }}
+          autoComplete="current-password"
+          value={password}
+          onChange={e => { setPassword(e.target.value); setError('') }}
         />
-        {error && <p className="gate-error">Incorrect password</p>}
-        <button type="submit" className="gate-btn">Enter</button>
+        {error && <p className="gate-error">{error}</p>}
+        <button type="submit" className="gate-btn" disabled={busy}>
+          {busy ? 'Signing in…' : 'Enter'}
+        </button>
       </form>
     </div>
   )
 }
 
-function Schedule() {
-  const { completedHabits, toggleHabit, stepCount, updateSteps } = useScheduleState()
+function Schedule({ userId }) {
+  const { completedHabits, toggleHabit, stepCount, updateSteps } = useScheduleState(userId)
+
+  async function signOut() {
+    await supabase.auth.signOut()
+    clearLocalCache()
+  }
+
   return (
     <div className="khroknows-app">
       <ScheduleLayer
@@ -51,13 +84,26 @@ function Schedule() {
         stepCount={stepCount}
         onStepUpdate={updateSteps}
       />
+      <button type="button" className="signout-btn" onClick={signOut}>
+        Sign out
+      </button>
     </div>
   )
 }
 
 export default function App() {
-  const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === '1')
+  // undefined = still checking for a saved session, null = signed out
+  const [session, setSession] = useState(undefined)
 
-  if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />
-  return <Schedule />
+  useEffect(() => {
+    if (!supabaseConfigured) return
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data } = supabase.auth.onAuthStateChange((_event, next) => setSession(next))
+    return () => data.subscription.unsubscribe()
+  }, [])
+
+  if (!supabaseConfigured) return <SetupNotice />
+  if (session === undefined) return null
+  if (!session) return <LoginGate />
+  return <Schedule userId={session.user.id} />
 }
